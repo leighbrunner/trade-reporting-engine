@@ -43,26 +43,21 @@ public class EventLoadingService {
         log.info("Loading sample events");
         List<File> xmlFiles = loadFilesFromResourceFolder(eventXmlDir, "xml");
 
-        log.info("Found {} event XMLs, loading them now", xmlFiles.size());
-        List<EventRecord> eventRecords = new ArrayList<>();
+        log.info("Found {} event XMLs, loading and saving them to the database now", xmlFiles.size());
         EventAdapter eventAdapter = new EventAdapter();
         for (File xmlFile : xmlFiles) {
             try {
                 EventRecord eventRecord = eventAdapter.convertXMLToRecord(xmlFile);
-                eventRecords.add(eventRecord);
+                eventService.saveEventRecord(eventRecord);
             } catch (IOException e) {
-                log.error("Failed to load file {}: {}", xmlFile.getName(), e.getMessage(), e);
+                log.error("Failed to load file {}, skipping: {}", xmlFile.getName(), e.getMessage(), e);
             } catch (ParserConfigurationException e) {
-                log.error("Failed to parse file {}: {}", xmlFile.getName(), e.getMessage(), e);
+                log.error("Failed to parse file {}, skipping: {}", xmlFile.getName(), e.getMessage(), e);
             } catch (SAXException e) {
-                log.error("Failed to source data from file {}: {}", xmlFile.getName(), e.getMessage(), e);
+                log.error("Failed to source data from file {}, skipping: {}", xmlFile.getName(), e.getMessage(), e);
             } catch (XPathExpressionException e) {
-                log.error("Failed to evaluate XPath for file {}: {}", xmlFile.getName(), e.getMessage(), e);
+                log.error("Failed to evaluate XPath for file {}, skipping: {}", xmlFile.getName(), e.getMessage(), e);
             }
-        }
-        log.info("Saving {} events to the database", eventRecords.size());
-        for (EventRecord eventRecord : eventRecords) {
-            eventService.saveEventRecord(eventRecord);
         }
         log.info("Finished loading Events");
     }
