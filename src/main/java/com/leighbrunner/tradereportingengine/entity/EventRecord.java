@@ -24,7 +24,7 @@ public class EventRecord {
     @JsonProperty("seller_party")
     private String sellerParty;
 
-    @JsonProperty("premium_account")
+    @JsonProperty("premium_amount")
     private BigDecimal premiumAmount;
 
     @JsonProperty("premium_currency")

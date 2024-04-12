@@ -1,7 +1,7 @@
 package com.leighbrunner.tradereportingengine.controller;
 
 import com.leighbrunner.tradereportingengine.entity.EventRecord;
-import com.leighbrunner.tradereportingengine.service.EventReportService;
+import com.leighbrunner.tradereportingengine.service.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,28 +24,37 @@ public class EventReportControllerTest {
 
     @Autowired
     MockMvc mockMvc;
-    
+
     @MockBean
-    private EventReportService eventReportService;
+    EventService eventService;
 
     @Test
     public void testEmuBankAUDAndBisonBankUSD() throws Exception {
-        EventRecord emuBankAUDAndBisonBankUSD = new EventRecord();
-        emuBankAUDAndBisonBankUSD.setId(1L);
-        emuBankAUDAndBisonBankUSD.setBuyerParty("EMU_BANK");
-        emuBankAUDAndBisonBankUSD.setSellerParty("BISON_BANK");
-        emuBankAUDAndBisonBankUSD.setPremiumAmount(new BigDecimal(70));
-        emuBankAUDAndBisonBankUSD.setPremiumCurrency("USD");
+        EventRecord event1 = new EventRecord();
+        event1.setId(1L);
+        event1.setBuyerParty("EMU_BANK");
+        event1.setSellerParty("BISON_BANK");
+        event1.setPremiumAmount(new BigDecimal(70));
+        event1.setPremiumCurrency("AUD");
 
-        when(eventReportService.getEmuBankAUDAndBisonBankUSDNonAnagramParties()).thenReturn(Arrays.asList(emuBankAUDAndBisonBankUSD));
+        // This value shouldn't be returned because the parties are anagrams
+        EventRecord event2 = new EventRecord();
+        event2.setId(2L);
+        event2.setBuyerParty("BISONBANK_");
+        event2.setSellerParty("BISON_BANK");
+        event2.setPremiumAmount(new BigDecimal(80));
+        event2.setPremiumCurrency("USD");
+
+        when(eventService.findBySellerPartyAndPremiumCurrency("EMU_BANK", "AUD")).thenReturn(Arrays.asList(event1));
+        when(eventService.findBySellerPartyAndPremiumCurrency("BISON_BANK", "USD")).thenReturn(Arrays.asList(event2));
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].buyer_party", is(emuBankAUDAndBisonBankUSD.getBuyerParty())))
-                .andExpect(jsonPath("$[0].seller_party", is(emuBankAUDAndBisonBankUSD.getSellerParty())))
-                .andExpect(jsonPath("$[0].premium_account", is(emuBankAUDAndBisonBankUSD.getPremiumAmount().intValue())))
-                .andExpect(jsonPath("$[0].premium_currency", is(emuBankAUDAndBisonBankUSD.getPremiumCurrency())))
+                .andExpect(jsonPath("$[0].buyer_party", is(event1.getBuyerParty())))
+                .andExpect(jsonPath("$[0].seller_party", is(event1.getSellerParty())))
+                .andExpect(jsonPath("$[0].premium_amount", is(event1.getPremiumAmount().intValue())))
+                .andExpect(jsonPath("$[0].premium_currency", is(event1.getPremiumCurrency())))
                 .andExpect(jsonPath("$[0].*", hasSize(4)));
 
     }
